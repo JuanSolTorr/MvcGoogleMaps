@@ -14,7 +14,7 @@ Este proyecto es una aplicación web moderna desarrollada en **ASP.NET Core MVC*
 
 ## 📦 Requisitos y Dependencias
 
-Si descargas el proyecto, Visual Studio restaurará los paquetes automáticamente. No obstante, estas son las librerías clave utilizadas:
+Estas son las librerías clave utilizadas en el proyecto:
 
 1.  **`Nominatim.API`**: Cliente para la geocodificación gratuita.
 2.  **`Microsoft.EntityFrameworkCore.SqlServer`**: Conector para SQL Server.
@@ -23,10 +23,17 @@ Si descargas el proyecto, Visual Studio restaurará los paquetes automáticament
 
 ---
 
-## 🛠️ Configuración en un nuevo equipo
+## ⚙️ Código Clave de la Arquitectura
 
-Para ejecutar este proyecto en otro ordenador (por ejemplo, para una presentación), sigue estos pasos:
-
-### 1. Clonar el repositorio
-```bash
-git clone [https://github.com/JuanSolTorr/MvcGoogleMaps.git](https://github.com/JuanSolTorr/MvcGoogleMaps.git)
+### 1. El Modelo (Sucursal.cs)
+Uso de C# 10+ con miembros requeridos y anotaciones de datos.
+```csharp
+public class Sucursal
+{
+    [Key]
+    public int Id { get; set; }
+    public required string Nombre { get; set; }
+    public required string DireccionTexto { get; set; }
+    public double Latitud { get; set; }
+    public double Longitud { get; set; }
+}
