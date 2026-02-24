@@ -88,6 +88,7 @@ Abre appsettings.json y actualiza el servidor:
 Abre la "Consola del Administrador de Paquetes" y ejecuta:
 ```csharp
 Install-Package Microsoft.EntityFrameworkCore.Tools
+Add-Migration Inicial
 Update-Database
 ```
 ## 📁 Estructura del Proyecto
