@@ -1,0 +1,158 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="error-container">
+    <div class="error-content">
+        <div class="error-icon">🗺️</div>
+        <h1 class="error-title">¡Ups! Algo salió mal</h1>
+        <h2 class="error-subtitle">Parece que nos hemos perdido en el mapa</h2>
+
+        @if (Model.ShowRequestId)
+        {
+            <div class="error-details">
+                <p class="error-label">ID de Solicitud:</p>
+                <code class="error-code">@Model.RequestId</code>
+            </div>
+        }
+
+        <div class="error-actions">
+            <a href="/" class="btn btn-primary">
+                🏠 Volver al Inicio
+            </a>
+        </div>
+
+        @if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            <div class="error-dev-info">
+                <h3>🔧 Modo de Desarrollo</h3>
+                <p>
+                    Estás en el entorno de <strong>Desarrollo</strong>, lo que permite mostrar información detallada sobre los errores.
+                </p>
+                <p class="error-warning">
+                    <strong>⚠️ Importante:</strong> El entorno de desarrollo no debe estar habilitado en aplicaciones desplegadas en producción, 
+                    ya que puede exponer información sensible a los usuarios finales.
+                </p>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .error-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 2rem;
+    }
+
+    .error-content {
+        text-align: center;
+        max-width: 600px;
+        background: white;
+        padding: 3rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .error-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        animation: shake 2s ease-in-out infinite;
+    }
+
+    @@keyframes shake {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-10deg); }
+        75% { transform: rotate(10deg); }
+    }
+
+    .error-title {
+        color: #ea4335;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .error-subtitle {
+        color: #5f6368;
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin-bottom: 2rem;
+    }
+
+    .error-details {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        border-left: 4px solid #ea4335;
+    }
+
+    .error-label {
+        color: #5f6368;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .error-code {
+        background: #202124;
+        color: #34a853;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        font-family: 'Courier New', monospace;
+        display: inline-block;
+    }
+
+    .error-actions {
+        margin-bottom: 2rem;
+    }
+
+    .error-dev-info {
+        background: linear-gradient(135deg, #fff3cd 0%, #fff8e1 100%);
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 4px solid #fbbc04;
+        text-align: left;
+        margin-top: 2rem;
+    }
+
+    .error-dev-info h3 {
+        color: #f57c00;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .error-dev-info p {
+        color: #5f6368;
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .error-warning {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 2px solid #fbbc04;
+    }
+
+    @@media (max-width: 768px) {
+        .error-content {
+            padding: 2rem 1.5rem;
+        }
+
+        .error-icon {
+            font-size: 3.5rem;
+        }
+
+        .error-title {
+            font-size: 1.5rem;
+        }
+
+        .error-subtitle {
+            font-size: 1rem;
+        }
+    }
+</style>

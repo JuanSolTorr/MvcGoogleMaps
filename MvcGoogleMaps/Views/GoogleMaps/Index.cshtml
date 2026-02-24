@@ -1,0 +1,365 @@
+﻿@model MvcGoogleMaps.Models.Sucursal
+
+@{
+    ViewData["Title"] = "Buscador de Sucursales";
+}
+
+<div class="page-header-map">
+    <h2 class="mb-4">🌍 Registro y Mapa de Sucursales</h2>
+    <p class="subtitle-map">Gestiona y visualiza tus ubicaciones en tiempo real</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Añadir nueva ubicación</h5>
+            </div>
+            <div class="card-body">
+
+                @if (ViewBag.MensajeExito != null)
+                {
+                    <div class="alert alert-success">@ViewBag.MensajeExito</div>
+                }
+
+                <form asp-action="Index" id="sucursalForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="form-group mb-3">
+                        <label for="Nombre" class="control-label fw-bold">
+                            <span class="label-icon">🏢</span> Nombre del Lugar
+                        </label>
+                        <input type="text" name="Nombre" id="Nombre" class="form-control" placeholder="Ej: Oficina Central" value="@Model.Nombre" />
+                        <span asp-validation-for="Nombre" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="DireccionTexto" class="control-label fw-bold">
+                            <span class="label-icon">📍</span> Dirección Completa
+                        </label>
+                        <input type="text" name="DireccionTexto" id="DireccionTexto" class="form-control" placeholder="Ej: Gran Vía 1, 28013 Madrid, España" value="@Model.DireccionTexto" />
+                        <span asp-validation-for="DireccionTexto" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            💾 Guardar y Localizar en Mapa
+                        </button>
+                    </div>
+                </form>
+
+                <div class="info-box mt-4">
+                    <div class="info-icon">💡</div>
+                    <div class="info-text">
+                        <strong>Tips de uso:</strong>
+                        <ul class="info-list">
+                            <li>📝 Introduce direcciones completas para mejores resultados</li>
+                            <li>🖱️ <strong>Haz clic en el mapa</strong> para seleccionar una ubicación</li>
+                            <li>📍 Los campos se rellenarán automáticamente</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="loadingIndicator" class="loading-box" style="display: none;">
+                    <div class="loading-spinner-box"></div>
+                    <div class="loading-text">Obteniendo dirección...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="map-wrapper">
+            <div class="map-header-info">
+                <span class="map-badge">🗺️ Vista en Tiempo Real</span>
+                <span class="map-badge-action" id="mapClickMode">🖱️ Modo: Click para seleccionar</span>
+            </div>
+            <div id="miMapa" style="height: 500px; width: 100%; cursor: crosshair;"></div>
+            <div class="map-footer-info">
+                <span class="coords-info" id="coordsDisplay">📊 Coordenadas: @Model.Latitud.ToString("F6"), @Model.Longitud.ToString("F6")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        var lat = @Model.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lng = @Model.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var zoomLevel = @Model.Id > 0 ? 17 : 6;
+
+        var map = L.map('miMapa').setView([lat, lng], zoomLevel);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Variable para almacenar el marcador actual
+        var currentMarker = null;
+
+        // Función para crear un marcador personalizado
+        function createCustomMarker(lat, lng, isTemporary = false) {
+            var customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div class="marker-pin ${isTemporary ? 'marker-temporary' : ''}"></div>`,
+                iconSize: [30, 42],
+                iconAnchor: [15, 42]
+            });
+
+            return L.marker([lat, lng], { icon: customIcon });
+        }
+
+        // Si hay una sucursal guardada, mostrar su marcador
+        @if (Model.Id > 0)
+        {
+            <text>
+            currentMarker = createCustomMarker(lat, lng, false);
+            currentMarker.addTo(map)
+                .bindPopup("<div class='custom-popup'><h6>@Model.Nombre</h6><p>@Model.DireccionTexto</p></div>")
+                .openPopup();
+            </text>
+        }
+
+        // Evento de clic en el mapa
+        map.on('click', async function(e) {
+            var clickedLat = e.latlng.lat;
+            var clickedLng = e.latlng.lng;
+
+            // Mostrar indicador de carga
+            document.getElementById('loadingIndicator').style.display = 'flex';
+
+            // Actualizar coordenadas en el footer
+            document.getElementById('coordsDisplay').textContent = `📊 Coordenadas: ${clickedLat.toFixed(6)}, ${clickedLng.toFixed(6)}`;
+
+            // Eliminar marcador anterior si existe
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+            }
+
+            // Crear nuevo marcador temporal
+            currentMarker = createCustomMarker(clickedLat, clickedLng, true);
+            currentMarker.addTo(map);
+
+            // Animar el zoom hacia el punto seleccionado
+            map.setView([clickedLat, clickedLng], 16, {
+                animate: true,
+                duration: 0.5
+            });
+
+            try {
+                // Llamar al servidor para obtener la dirección
+                const response = await fetch(`/GoogleMaps/GetAddressFromCoordinates?lat=${clickedLat}&lng=${clickedLng}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    // Rellenar el campo de dirección
+                    document.getElementById('DireccionTexto').value = data.address;
+                    
+                    // Generar nombre sugerido basado en la dirección (sin prefijo "Sucursal")
+                    var addressParts = data.address.split(',');
+                    var suggestedName = addressParts.length > 0 ? addressParts[0].trim() : 'Nueva Ubicación';
+                    
+                    // Siempre rellenar el nombre con el sugerido
+                    document.getElementById('Nombre').value = suggestedName;
+
+                    // Actualizar popup del marcador
+                    currentMarker.bindPopup(`
+                        <div class='custom-popup'>
+                            <h6>📍 Ubicación Seleccionada</h6>
+                            <p><strong>${suggestedName}</strong></p>
+                            <p>${data.address}</p>
+                            <small>Lat: ${clickedLat.toFixed(6)}, Lng: ${clickedLng.toFixed(6)}</small>
+                        </div>
+                    `).openPopup();
+
+                    // Mostrar notificación de éxito
+                    if (typeof showToast === 'function') {
+                        showToast('✅ Ubicación seleccionada correctamente', 'success');
+                    }
+
+                    // Animar los inputs
+                    document.getElementById('DireccionTexto').classList.add('input-highlight');
+                    document.getElementById('Nombre').classList.add('input-highlight');
+                    
+                    setTimeout(() => {
+                        document.getElementById('DireccionTexto').classList.remove('input-highlight');
+                        document.getElementById('Nombre').classList.remove('input-highlight');
+                    }, 1500);
+
+                } else {
+                    // Mostrar error
+                    if (typeof showToast === 'function') {
+                        showToast('⚠️ No se pudo obtener la dirección. Intenta con otra ubicación.', 'warning');
+                    }
+                    
+                    currentMarker.bindPopup(`
+                        <div class='custom-popup'>
+                            <h6>⚠️ Ubicación sin dirección</h6>
+                            <p>Lat: ${clickedLat.toFixed(6)}</p>
+                            <p>Lng: ${clickedLng.toFixed(6)}</p>
+                        </div>
+                    `).openPopup();
+                }
+            } catch (error) {
+                console.error('Error al obtener dirección:', error);
+                if (typeof showToast === 'function') {
+                    showToast('❌ Error al conectar con el servidor', 'error');
+                }
+            } finally {
+                // Ocultar indicador de carga
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        });
+
+        // Ajustar tamaño del mapa
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 100);
+
+        // Cambiar cursor al pasar sobre el mapa
+        map.on('mouseover', function() {
+            document.getElementById('mapClickMode').style.background = 'rgba(255, 255, 255, 0.3)';
+        });
+
+        map.on('mouseout', function() {
+            document.getElementById('mapClickMode').style.background = 'transparent';
+        });
+    </script>
+
+    <style>
+        .custom-marker {
+            background: none;
+            border: none;
+        }
+
+        .marker-pin {
+            width: 30px;
+            height: 42px;
+            background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+            border-radius: 50% 50% 50% 0;
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%;
+            top: 50%;
+            margin: -21px 0 0 -15px;
+            animation: bounce 1s infinite;
+            box-shadow: 0 3px 10px rgba(234, 67, 53, 0.5);
+        }
+
+        .marker-pin.marker-temporary {
+            background: linear-gradient(135deg, #fbbc04 0%, #f9ab00 100%);
+            box-shadow: 0 3px 10px rgba(251, 188, 4, 0.5);
+        }
+
+        .marker-pin::after {
+            content: '';
+            width: 14px;
+            height: 14px;
+            margin: 8px 0 0 8px;
+            background: white;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        @@keyframes bounce {
+            0%, 100% { transform: rotate(-45deg) translateY(0); }
+            50% { transform: rotate(-45deg) translateY(-10px); }
+        }
+
+        .custom-popup h6 {
+            color: #1a73e8;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .custom-popup p {
+            margin: 0.25rem 0;
+            color: #5f6368;
+            font-size: 0.9rem;
+        }
+
+        .custom-popup small {
+            color: #9e9e9e;
+            font-size: 0.75rem;
+            display: block;
+            margin-top: 0.5rem;
+        }
+
+        .info-list {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.2rem;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .info-list li {
+            margin-bottom: 0.3rem;
+        }
+
+        .loading-box {
+            background: linear-gradient(135deg, #fff3cd 0%, #fff8e1 100%);
+            border-left: 4px solid #fbbc04;
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: pulse-loading 1.5s ease-in-out infinite;
+        }
+
+        @@keyframes pulse-loading {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .loading-spinner-box {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(251, 188, 4, 0.3);
+            border-radius: 50%;
+            border-top-color: #fbbc04;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            color: #f57c00;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .input-highlight {
+            animation: highlight-input 1.5s ease;
+        }
+
+        @@keyframes highlight-input {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); box-shadow: 0 0 20px rgba(26, 115, 232, 0.4); }
+            100% { transform: scale(1); }
+        }
+
+        .map-badge-action {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        #miMapa {
+            cursor: crosshair !important;
+        }
+
+        .leaflet-container {
+            cursor: crosshair !important;
+        }
+    </style>
+}
