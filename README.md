@@ -81,7 +81,7 @@ Sigue estos pasos para replicar la base de datos en SQL Server Management Studio
 Abre appsettings.json y actualiza el servidor:
 ```csharp
 "ConnectionStrings": {
-  "DefaultConnection": "Server=NOMBRE_DE_TU_SERVIDOR;Database=MvcGoogleMapsDB;Trusted_Connection=True;TrustServerCertificate=True;"
+  "DefaultConnection": "Server=NOMBRE_DE_TU_SERVIDOR;Database=NOMBRE_DE_TU_BASE_DE_DATOS;Trusted_Connection=True;TrustServerCertificate=True;"
 }
 ```
 2. Ejecutar Comandos en Consola NuGet:
